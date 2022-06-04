@@ -26,8 +26,8 @@ def coords_from_zenith_azimuth(rows,cols,zenith,azimuth):
     return x,y
 
 # Calculate bounding box from center lat/lon coordinates
-lat = math.radians(34.695681)
-lon = math.radians(-86.669805)
+lat = math.radians(52.470868)
+lon = math.radians(13.325687)
 
 distance = 30e3 # radius for the bounding box (m)
 R = 6371e3 # earth radius (m)
@@ -86,8 +86,10 @@ for i in range(0,len(geo_altitude)):
     * math.sin(delta_lon/2)*math.sin(delta_lon/2)
     c = 2 * math.atan2(math.sqrt(a),math.sqrt(1-a))
     horz_dist = R * c
-
-    elevation_angle = math.degrees(math.atan(geo_altitude[i] / horz_dist))
+    try: # in some cases geo_altitude is not available
+        elevation_angle = math.degrees(math.atan(geo_altitude[i] / horz_dist))
+    except:
+        continue
     zenith = 90-elevation_angle
 
     # calculate bearing between station and plane
@@ -103,7 +105,7 @@ for i in range(0,len(geo_altitude)):
 
     # Pasting img2 image on top of img1
     # starting at coordinates (0, 0)
-    img1.paste(img2, (x,y), mask = img2)
+    img1.paste(img2, (x-8,y-8), mask = img2)  # x-8,y-8 -> half the image height/width have to be subtracted
     # Call draw Method to add 2D graphics in an image
     I1 = ImageDraw.Draw(img1)
 
@@ -112,12 +114,14 @@ for i in range(0,len(geo_altitude)):
     speed_mh = velocity[i]*2.237 # speed of plane (miles/h)
 
     # get the aircraft type from local FAA database
-    type_aircraft = aircraft_type_search(icao[i])
-
+    try:
+        type_aircraft = aircraft_type_search(icao[i])
+    except:
+        type_aircraft = "NA"
     # Add Text to an image
     if x+107 > cols: # to avoid that the textbox extends out of the image
         x = x - ((x+107)-cols)
-    I1.multiline_text((x, y + 25), "Callsign: "+callsign[i] + "\n" + "Speed: " + str(round(speed_kmh,2)) + " km/h" + "\n" + "Height: " + str(round(height,2)) + " km" + "\n" + "Aircraft type: " + type_aircraft, fill=(150, 0, 0))
+    I1.multiline_text((x, y + 17), "Callsign: "+callsign[i] + "\n" + "Speed: " + str(round(speed_kmh,2)) + " km/h" + "\n" + "Height: " + str(round(height,2)) + " km" + "\n" + "Aircraft type: " + type_aircraft, fill=(150, 0, 0))
 # Displaying the image
 img1.show()
 img1.save("planes_result.png")
