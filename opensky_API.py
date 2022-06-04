@@ -4,6 +4,7 @@ from PIL import Image
 from PIL import ImageDraw
 import numpy as np
 from opensky_api import OpenSkyApi
+from aircraft_type import aircraft_type_search
 
 # define functions
 def coords_from_zenith_azimuth(rows,cols,zenith,azimuth):
@@ -25,8 +26,8 @@ def coords_from_zenith_azimuth(rows,cols,zenith,azimuth):
     return x,y
 
 # Calculate bounding box from center lat/lon coordinates
-lat = math.radians(52.262297)
-lon = math.radians(10.522219)
+lat = math.radians(34.695681)
+lon = math.radians(-86.669805)
 
 distance = 30e3 # radius for the bounding box (m)
 R = 6371e3 # earth radius (m)
@@ -51,15 +52,17 @@ plane_lat = []
 plane_lon = []
 callsign = []
 velocity = []
+icao = []
 
 states = api.get_states(bbox=(min_lat, max_lat, min_lon, max_lon))
 for s in states.states:
-    print("(%r,%r, %r, %r, %r, %r, %r, %r)" % (s.icao24,s.callsign,s.origin_country,s.longitude, s.latitude, s.baro_altitude,s.geo_altitude, s.velocity))
+    #print("(%r,%r, %r, %r, %r, %r, %r, %r)" % (s.icao24,s.callsign,s.origin_country,s.longitude, s.latitude, s.baro_altitude,s.geo_altitude, s.velocity))
     geo_altitude.append(s.geo_altitude)
     plane_lat.append(s.latitude)
     plane_lon.append(s.longitude)
     callsign.append(s.callsign)
     velocity.append(s.velocity)
+    icao.append(s.icao24)
 
 # visualize location on fisheye view of station
 # main part
@@ -103,14 +106,18 @@ for i in range(0,len(geo_altitude)):
     img1.paste(img2, (x,y), mask = img2)
     # Call draw Method to add 2D graphics in an image
     I1 = ImageDraw.Draw(img1)
-    # Add Text to an image
-    #sat_name = sat_names[i]
 
     height = geo_altitude[i]/1000 # height of plane (km)
     speed_kmh = velocity[i]*3.6 # speed of plane (km/h)
     speed_mh = velocity[i]*2.237 # speed of plane (miles/h)
 
-    #I1.text((x, y + 48), callsign, fill=(0, 0, 0))
-    I1.multiline_text((x, y + 48), "Callsign: "+callsign[i] + "\n" + "Speed: " + str(round(speed_kmh,2)) + " km/h" + "\n" + "Height: " + str(round(height,2)) + " km", fill=(150, 0, 0))
+    # get the aircraft type from local FAA database
+    type_aircraft = aircraft_type_search(icao[i])
+
+    # Add Text to an image
+    if x+107 > cols: # to avoid that the textbox extends out of the image
+        x = x - ((x+107)-cols)
+    I1.multiline_text((x, y + 25), "Callsign: "+callsign[i] + "\n" + "Speed: " + str(round(speed_kmh,2)) + " km/h" + "\n" + "Height: " + str(round(height,2)) + " km" + "\n" + "Aircraft type: " + type_aircraft, fill=(150, 0, 0))
 # Displaying the image
 img1.show()
+img1.save("planes_result.png")
