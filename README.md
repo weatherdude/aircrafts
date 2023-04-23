@@ -3,4 +3,4 @@ The script **opensky_API.py** calls the opensky API and calculates a bounding bo
 
 The script **airtraffic.py** contains a function that calls the opensky API with a given latitude,longitude pair and returns lists with airtraffic data within a radius of 30 km.
 
-The script *weather_METAR.py* allows to request cloud base height in m or ft within a latitude/longitude rectangle.
+The script **weather_METAR.py** allows to request cloud base height in m or ft within a latitude/longitude rectangle.
